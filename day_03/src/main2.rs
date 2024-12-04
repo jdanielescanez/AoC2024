@@ -8,8 +8,7 @@ fn mull_it_over(memory: &str) -> u32 {
             expr.split("don't()")
                 .collect::<Vec<&str>>()[0]
         )
-        .collect::<Vec<&str>>()
-        .join("");
+        .collect::<String>();
 
     let re = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
     re.captures_iter(&enabled_memory).fold(0, |acc, capture| {
