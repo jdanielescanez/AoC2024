@@ -23,7 +23,7 @@ impl DiskMap {
             .map(|(_, x)| x.to_digit(10).unwrap() as usize)
             .collect();
 
-        let files = enumerated_chars
+        let mut aux_files: Vec<File> = enumerated_chars
             .filter(|(i, _)| i % 2 == 0)
             .enumerate()
             .map(|(id, (_, x))| File {
@@ -32,6 +32,19 @@ impl DiskMap {
                 spaces: spaces[id],
             })
             .collect();
+
+        let mut files: Vec<File> = vec![];
+        let mut i = 0;
+        while i < aux_files.len() - 1 {
+            let mut flag = false;
+            if aux_files[i + 1].repetitions == 0 {
+                aux_files[i].spaces += aux_files[i + 1].spaces;
+                flag = true;
+            }
+            files.push(aux_files[i]);
+            i += if flag { 2 } else { 1 };
+        }
+        files.push(*aux_files.last().unwrap());
 
         DiskMap { files }
     }
@@ -70,22 +83,28 @@ impl DiskMap {
     pub fn get_fragmented_disk_checksum_with_whole_file(&self) -> usize {
         let mut result: Vec<File> = self.files.clone();
 
-        for j in (0..result.len()).rev() {
+        let mut j = result.len() - 1;
+        loop {
             let candidate = result[j];
             for i in 0..j {
                 let start_file = result[i];
                 if start_file.spaces >= candidate.repetitions {
                     result[i].spaces = 0;
-                    result[j - 1].spaces += candidate.repetitions + candidate.spaces;
                     result.remove(j);
                     result.insert(i + 1, candidate);
                     result[i + 1].spaces = start_file
                         .spaces
                         .checked_sub(candidate.repetitions)
                         .unwrap();
+                    result[j].spaces += candidate.repetitions + candidate.spaces;
+                    j += 1;
                     break;
                 }
             }
+            if j == 0 {
+                break;
+            }
+            j -= 1;
         }
         result
             .into_iter()
@@ -107,8 +126,8 @@ fn main() {
 
     let disk_map = DiskMap::new(&disk_map_string_string);
     let result_part1 = disk_map.get_fragmented_disk_checksum();
-    let result_part2 = disk_map.get_fragmented_disk_checksum_with_whole_file();
     println!("Result part 1: {}", result_part1);
+    let result_part2 = disk_map.get_fragmented_disk_checksum_with_whole_file();
     println!("Result part 2: {}", result_part2);
 }
 
