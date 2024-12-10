@@ -130,6 +130,17 @@ impl Map {
             })
             .count()
     }
+
+    fn get_trailheads_distinct_count(&self) -> usize {
+        self.get_inits()
+            .into_iter()
+            .flat_map(|init| {
+                self.recursive_step(init, 9)
+                    .into_iter()
+                    .filter(|cell| cell.height == 9)
+            })
+            .count()
+    }
 }
 
 fn main() {
@@ -143,7 +154,9 @@ fn main() {
     let map = Map::new(map_string);
 
     let result_part1 = map.get_trailheads_count();
+    let result_part2 = map.get_trailheads_distinct_count();
     println!("Result part 1: {}", result_part1);
+    println!("Result part 2: {}", result_part2);
 }
 
 #[cfg(test)]
@@ -164,5 +177,13 @@ mod tests {
             fs::read_to_string("test2.txt").expect("Should have been able to read the file");
         let map = Map::new(map_string);
         assert_eq!(map.get_trailheads_count(), 36);
+    }
+
+    #[test]
+    fn complex_distinct_example() {
+        let map_string =
+            fs::read_to_string("test2.txt").expect("Should have been able to read the file");
+        let map = Map::new(map_string);
+        assert_eq!(map.get_trailheads_distinct_count(), 81);
     }
 }
