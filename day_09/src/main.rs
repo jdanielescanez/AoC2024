@@ -68,38 +68,31 @@ impl DiskMap {
     }
 
     pub fn get_fragmented_disk_checksum_with_whole_file(&self) -> usize {
-        let mut result: Vec<File> = Vec::new();
-        let mut unplaced_files: Vec<File> = self.files.clone();
+        let mut result: Vec<File> = self.files.clone();
 
-        while unplaced_files.len() > 0 {
-            let mut start_file = unplaced_files[0];
-            result.push(start_file);
-            for j in (result.len()..unplaced_files.len()).rev() {
-                let mut candidate = unplaced_files[j];
-                dbg!(
-                    start_file,
-                    candidate,
-                    start_file.spaces,
-                    candidate.repetitions
-                );
+        for j in (0..result.len()).rev() {
+            let candidate = result[j];
+            for i in 0..j {
+                let start_file = result[i];
                 if start_file.spaces >= candidate.repetitions {
-                    candidate.spaces = start_file
+                    result[i].spaces = 0;
+                    result[j - 1].spaces += candidate.repetitions + candidate.spaces;
+                    result.remove(j);
+                    result.insert(i + 1, candidate);
+                    result[i + 1].spaces = start_file
                         .spaces
                         .checked_sub(candidate.repetitions)
                         .unwrap();
-                    let last_index = result.len() - 1;
-                    result[last_index].spaces = 0;
-                    result.push(candidate);
-                    unplaced_files[j - 1].spaces += candidate.repetitions + candidate.spaces;
-                    start_file = candidate;
-                    unplaced_files.remove(j);
+                    break;
                 }
             }
-            unplaced_files.remove(0);
-            dbg!(&result, &unplaced_files);
         }
-        dbg!(result);
-        0
+        result
+            .into_iter()
+            .flat_map(|file| [&vec![file.id; file.repetitions][..], &vec![0; file.spaces]].concat())
+            .enumerate()
+            .map(|(i, file_id)| i * file_id as usize)
+            .sum()
     }
 }
 
@@ -113,8 +106,10 @@ fn main() {
         fs::read_to_string(input_filename).expect("Should have been able to read the file");
 
     let disk_map = DiskMap::new(&disk_map_string_string);
-    let result = disk_map.get_fragmented_disk_checksum();
-    println!("{}", result);
+    let result_part1 = disk_map.get_fragmented_disk_checksum();
+    let result_part2 = disk_map.get_fragmented_disk_checksum_with_whole_file();
+    println!("Result part 1: {}", result_part1);
+    println!("Result part 2: {}", result_part2);
 }
 
 #[cfg(test)]
