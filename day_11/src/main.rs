@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 
 fn line_to_stones(line: String) -> Vec<u64> {
@@ -6,22 +7,66 @@ fn line_to_stones(line: String) -> Vec<u64> {
         .collect()
 }
 
+fn single_blink(stone: u64) -> Vec<u64> {
+    match stone {
+        0 => vec![1],
+        stone if stone.to_string().len() % 2 == 0 => {
+            let stone_str = stone.to_string();
+            let middle = stone_str.len() / 2;
+            vec![
+                stone_str[..middle].parse::<u64>().unwrap(),
+                stone_str[middle..].parse::<u64>().unwrap(),
+            ]
+        }
+        _ => vec![2024 * stone],
+    }
+}
+
 fn blink(stones: &Vec<u64>) -> Vec<u64> {
     stones
         .into_iter()
-        .flat_map(|stone| match stone {
-            0 => vec![1],
-            stone if stone.to_string().len() % 2 == 0 => {
-                let stone_str = stone.to_string();
-                let middle = stone_str.len() / 2;
-                vec![
-                    stone_str[..middle].parse::<u64>().unwrap(),
-                    stone_str[middle..].parse::<u64>().unwrap(),
-                ]
-            }
-            _ => vec![2024 * stone],
-        })
+        .flat_map(|&stone| single_blink(stone))
         .collect()
+}
+
+fn part_1(mut stones: Vec<u64>) -> usize {
+    for _ in 0..25 {
+        stones = blink(&stones);
+    }
+    stones.len()
+}
+
+fn part_2(mut stones: Vec<u64>) -> usize {
+    let mut result = 0;
+    let mut table = HashMap::new();
+
+    // 15 blinks
+    for _ in 0..15 {
+        stones = blink(&stones);
+    }
+
+    for stone in stones {
+        let mut mid_frontier = vec![stone];
+        // 30 + 15 = 45 blinks
+        for _ in 0..30 {
+            mid_frontier = blink(&mid_frontier);
+            table.insert(stone, mid_frontier.len());
+        }
+        for frontier_stone in mid_frontier {
+            // 30 + 30 + 15 = 75 blinks
+            if table.contains_key(&frontier_stone) {
+                result += table[&frontier_stone];
+            } else {
+                let mut last_frontier = vec![frontier_stone];
+                for _ in 0..30 {
+                    last_frontier = blink(&last_frontier);
+                }
+                table.insert(frontier_stone, last_frontier.len());
+                result += last_frontier.len();
+            }
+        }
+    }
+    result
 }
 
 fn main() {
@@ -32,13 +77,13 @@ fn main() {
 
     let stones_string =
         fs::read_to_string(input_filename).expect("Should have been able to read the file");
+    let stones: Vec<u64> = line_to_stones(stones_string);
 
-    let mut stones: Vec<u64> = line_to_stones(stones_string);
-    for _ in 0..25 {
-        stones = blink(&stones);
-    }
-    let result_part1 = stones.len();
+    let result_part1 = part_1(stones.clone());
     println!("Result part 1: {}", result_part1);
+
+    let result_part2 = part_2(stones);
+    println!("Result part 2: {}", result_part2);
 }
 
 #[cfg(test)]
