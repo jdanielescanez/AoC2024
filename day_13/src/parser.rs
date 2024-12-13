@@ -2,7 +2,7 @@ use super::behavior::Behavior;
 
 use nom::{
     bytes::complete::tag,
-    character::complete::{i32, multispace1},
+    character::complete::{i64, multispace1},
     multi::separated_list1,
     sequence::tuple,
     IResult,
@@ -15,17 +15,17 @@ pub fn read_input(input: &str) -> IResult<&str, Vec<Behavior>> {
 fn read_behavior(behavior: &str) -> IResult<&str, Behavior> {
     let (input, (_, x_a, _, y_a, _, x_b, _, y_b, _, x_prize, _, y_prize)) = tuple((
         tag("Button A: X+"),
-        i32,
+        i64,
         tag(", Y+"),
-        i32,
+        i64,
         tag("\nButton B: X+"),
-        i32,
+        i64,
         tag(", Y+"),
-        i32,
+        i64,
         tag("\nPrize: X="),
-        i32,
+        i64,
         tag(", Y="),
-        i32,
+        i64,
     ))(behavior)?;
 
     Ok((

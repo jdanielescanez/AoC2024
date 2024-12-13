@@ -1,14 +1,14 @@
 pub struct Solution {
-    pub a: u32,
-    pub b: u32,
+    pub a: u64,
+    pub b: u64,
 }
 
 impl Solution {
     pub fn new(a: f64, b: f64) -> Option<Self> {
         if a.fract() == 0.0 && b.fract() == 0.0 {
             Some(Solution {
-                a: a as u32,
-                b: b as u32,
+                a: a as u64,
+                b: b as u64,
             })
         } else {
             None
@@ -16,14 +16,14 @@ impl Solution {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Behavior {
-    pub x_a: i32,
-    pub x_b: i32,
-    pub x_prize: i32,
-    pub y_a: i32,
-    pub y_b: i32,
-    pub y_prize: i32,
+    pub x_a: i64,
+    pub x_b: i64,
+    pub x_prize: i64,
+    pub y_a: i64,
+    pub y_b: i64,
+    pub y_prize: i64,
 }
 
 impl Behavior {
@@ -36,5 +36,10 @@ impl Behavior {
             x_determinant / denominator_determinant,
             y_determinant / denominator_determinant,
         )
+    }
+
+    pub fn set_unit_conversion_correction(&mut self) {
+        self.x_prize += 10000000000000;
+        self.y_prize += 10000000000000;
     }
 }
