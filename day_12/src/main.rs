@@ -65,20 +65,20 @@ impl Map {
         let position = cell.position;
         vec![
             Position {
-                y: position.y - 1,
                 x: position.x,
-            },
-            Position {
                 y: position.y + 1,
-                x: position.x,
             },
             Position {
-                y: position.y,
-                x: position.x - 1,
-            },
-            Position {
-                y: position.y,
                 x: position.x + 1,
+                y: position.y,
+            },
+            Position {
+                x: position.x,
+                y: position.y - 1,
+            },
+            Position {
+                x: position.x - 1,
+                y: position.y,
             },
         ]
         .into_iter()
@@ -86,17 +86,52 @@ impl Map {
         .collect()
     }
 
+    fn get_diagonal(&self, first_neighbour: Cell, second_neighbour: Cell, current: Cell) -> Cell {
+        let position = if current.position.x == first_neighbour.position.x {
+            Position {
+                x: second_neighbour.position.x,
+                y: first_neighbour.position.y,
+            }
+        } else {
+            Position {
+                x: first_neighbour.position.x,
+                y: second_neighbour.position.y,
+            }
+        };
+        self.get_cell(&position)
+    }
+
     fn step(&mut self, cell: Cell) -> (Vec<Cell>, usize) {
         self.visited.insert(cell);
-        let (equal_neighbours, unequal_neighbours): (Vec<Cell>, Vec<Cell>) = self
-            .get_neighbours(cell)
+        let all_neighbours = self.get_neighbours(cell);
+        let (equal_neighbours, unequal_neighbours): (Vec<Cell>, Vec<Cell>) = all_neighbours
+            .clone()
             .into_iter()
             .partition(|neighbour| neighbour.id == cell.id);
+
+        let mut all_neighbours = self.get_neighbours(cell);
+        all_neighbours.push(all_neighbours[0]);
+        let direct_vertex = all_neighbours
+            .windows(2)
+            .filter(|cells| {
+                unequal_neighbours.contains(&cells[0]) && unequal_neighbours.contains(&cells[1])
+            })
+            .count();
+        let undirect_vertex = all_neighbours
+            .windows(2)
+            .filter(|cells| {
+                equal_neighbours.contains(&cells[0])
+                    && equal_neighbours.contains(&cells[1])
+                    && self.get_diagonal(cells[0], cells[1], cell).id != cell.id
+            })
+            .count();
+
         let unvisited_neighbours = equal_neighbours
             .into_iter()
             .filter(|neighbour| !self.visited.contains(neighbour))
             .collect();
-        (unvisited_neighbours, unequal_neighbours.len())
+
+        (unvisited_neighbours, direct_vertex + undirect_vertex)
     }
 
     fn recursive_step(&mut self, cell: Cell) -> (Vec<Cell>, usize) {
@@ -150,7 +185,7 @@ fn main() {
         fs::read_to_string(input_filename).expect("Should have been able to read the file");
     let mut map = Map::new(map_string);
     let result_part1 = map.get_price();
-    println!("Result part 1: {}", result_part1);
+    println!("Result part 2: {}", result_part1);
 }
 
 #[cfg(test)]
@@ -158,18 +193,26 @@ mod tests {
     use super::*;
 
     #[test]
-    fn example() {
+    fn xo_example() {
         let map_string =
             fs::read_to_string("test.txt").expect("Should have been able to read the file");
         let mut map = Map::new(map_string);
-        assert_eq!(map.get_price(), 772);
+        assert_eq!(map.get_price(), 436);
     }
 
     #[test]
-    fn complex_example() {
+    fn e_example() {
         let map_string =
             fs::read_to_string("test2.txt").expect("Should have been able to read the file");
         let mut map = Map::new(map_string);
-        assert_eq!(map.get_price(), 1930);
+        assert_eq!(map.get_price(), 236);
+    }
+
+    #[test]
+    fn ab_example() {
+        let map_string =
+            fs::read_to_string("test3.txt").expect("Should have been able to read the file");
+        let mut map = Map::new(map_string);
+        assert_eq!(map.get_price(), 368);
     }
 }
